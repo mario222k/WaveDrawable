@@ -20,7 +20,7 @@ class WaveAnimator(val wave: Wave) {
         interpolator: TimeInterpolator?,
         vararg values: Float
     ): WaveAnimator {
-        xAnimator =  getAnimator("x", duration, delay, interpolator, *values)
+        xAnimator = getAnimator("x", duration, delay, interpolator, *values)
         return this
     }
 
@@ -80,7 +80,7 @@ class WaveAnimator(val wave: Wave) {
         return this
     }
 
-    fun onUpdate(callback: (wave: Wave)->Unit): WaveAnimator {
+    fun onUpdate(callback: (wave: Wave) -> Unit): WaveAnimator {
         updateAnimator = ValueAnimator.ofInt(0, 100).apply {
             addUpdateListener { callback.invoke(wave) }
             repeatCount = ValueAnimator.INFINITE

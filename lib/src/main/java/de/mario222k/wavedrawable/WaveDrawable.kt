@@ -11,7 +11,6 @@ import android.graphics.drawable.Drawable
 
 
 class WaveDrawable : Drawable() {
-
     private var height = 0f
     private var width = 0f
     private var animator: AnimatorSet? = null
