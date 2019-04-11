@@ -3,11 +3,13 @@ package de.mario222k.wavedrawable
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.AnimatorSet
+import android.animation.ValueAnimator
 import android.graphics.Canvas
 import android.graphics.ColorFilter
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
+import android.os.Build
 
 
 class WaveDrawable : Drawable() {
@@ -22,10 +24,11 @@ class WaveDrawable : Drawable() {
             it.path.moveTo(0f, height)
             it.path.lineTo(0f, it.y)
 
-            val steps = (width * it.samples).toInt()
+            val scale = 2 * Math.PI * it.frequency / width
+            val steps = width.toInt() / it.samples
             for (i in 0 until (width + steps).toInt() step steps) {
                 val x = i.toFloat()
-                val sin = it.amplitude * Math.sin((i + it.x) * Math.PI / it.frequency)
+                val sin = it.amplitude * Math.sin((x * scale) + it.x)
                 val y = it.y + sin.toFloat()
                 it.path.lineTo(x, y)
             }
@@ -63,20 +66,12 @@ class WaveDrawable : Drawable() {
                 return@forEach
             }
 
-            if (it.duration >= 0) {
-                it.addListener(object : AnimatorListenerAdapter() {
-                    override fun onAnimationCancel(animation: Animator?) {
-                        super.onAnimationCancel(animation)
-                        it.duration = (it.duration / speed).toLong()
-                        it.removeListener(this)
-                    }
-
-                    override fun onAnimationRepeat(animation: Animator?) {
-                        super.onAnimationRepeat(animation)
-                        it.duration = (it.duration / speed).toLong()
-                        it.removeListener(this)
-                    }
-                })
+            if (it.duration >= 0 && it is ValueAnimator) {
+                val f = it.animatedFraction
+                it.duration = (it.duration / speed).toLong()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+                    it.setCurrentFraction(f)
+                }
             }
         }
     }

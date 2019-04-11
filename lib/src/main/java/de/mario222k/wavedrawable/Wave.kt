@@ -11,7 +11,7 @@ class Wave(
     var frequency: Float,
     var x: Float,
     var y: Float,
-    var samples: Float
+    var samples: Int
 ) {
 
     fun setColor(@ColorInt color: Int) {

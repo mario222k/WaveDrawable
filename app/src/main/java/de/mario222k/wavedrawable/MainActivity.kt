@@ -4,20 +4,29 @@ import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Shader
 import android.os.Bundle
+import android.os.Handler
+import android.os.Message
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.LinearInterpolator
 import androidx.appcompat.app.AppCompatActivity
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import kotlinx.android.synthetic.main.activity_main.*
-import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
-    private var disposable: Disposable? = null
+    companion object {
+        private const val MSG_SPEED_UP = 23
+        private const val MSG_SLOW_DOWN = 24
+        private const val MSG_RESET = 25
+    }
+
+    private val handler = MessageHandler().apply {
+        speed.observe(this@MainActivity, Observer {
+            (waveview.background as? WaveDrawable)?.speed(it)
+        })
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,17 +42,24 @@ class MainActivity : AppCompatActivity() {
                 start(getAnimations(waveview))
             }
         }
-        disposable = Observable.timer(5, TimeUnit.SECONDS)
-            .subscribeOn(Schedulers.trampoline())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe {
-                (waveview.background as? WaveDrawable)?.speed(6f)
-            }
+
+        loading_button.setOnClickListener {
+            it.isEnabled = false
+            handler.sendEmptyMessage(MSG_SPEED_UP)
+
+            handler.postDelayed({
+                if(isFinishing) return@postDelayed
+
+                it.isEnabled = true
+                handler.sendEmptyMessage(MSG_SLOW_DOWN)
+            }, 5000)
+        }
     }
 
-    override fun onPause() {
-        super.onPause()
-        disposable?.dispose()
+    override fun onDestroy() {
+        super.onDestroy()
+        handler.removeMessages(MSG_SLOW_DOWN)
+        handler.removeMessages(MSG_SPEED_UP)
     }
 
     private fun getAnimations(view: View): List<WaveAnimator> {
@@ -52,7 +68,7 @@ class MainActivity : AppCompatActivity() {
             Color.parseColor("#EEFFFFFF")
         )
         val waves = listOf(
-            Wave(colors[0], 20f, 500f, 0f, view.height * 0.5f, 0.1f).apply {
+            Wave(colors[0], 20f, 0.4f, 0f, view.height * 0.6f, 40).apply {
                 paint.shader = LinearGradient(
                     0f,
                     0f,
@@ -63,7 +79,7 @@ class MainActivity : AppCompatActivity() {
                     Shader.TileMode.CLAMP
                 )
             },
-            Wave(colors[1], 60f, 400f, 0f, view.height * 0.7f, 0.08f).apply {
+            Wave(colors[1], 40f, 0.25f, 0f, view.height * 0.8f, 80).apply {
                 paint.shader = LinearGradient(
                     0f,
                     0f,
@@ -76,21 +92,40 @@ class MainActivity : AppCompatActivity() {
             }
         )
 
+        val phase = 2f * Math.PI.toFloat()
         return listOf(
             waves[0].animate()
-                .x(6000L, 0, LinearInterpolator(), 0f, (waves[0].frequency * 2))
+                .x(6000L, 0, LinearInterpolator(), 0f, phase)
                 .y(
                     24000L, 0, AccelerateDecelerateInterpolator(),
                     waves[0].y, waves[0].y * 0.8f, waves[0].y * 1.3f, waves[0].y
                 )
-                .amplitude(7000L, 0, LinearInterpolator(), 20f, 80f, 60f, 20f),
+                .amplitude(9000L, 0, LinearInterpolator(), waves[0].amplitude, 50f, waves[0].amplitude),
+
             waves[1].animate()
-                .x(8000L, 0, LinearInterpolator(), 0f, (waves[1].frequency * 2))
+                .x(8000L, 0, LinearInterpolator(), 0f, phase)
                 .y(
                     20000L, 0, AccelerateDecelerateInterpolator(),
-                    waves[1].y, waves[1].y * 0.85f, waves[1].y * 1.25f, waves[1].y
+                    waves[1].y, waves[1].y * 1.2f, waves[1].y * 0.8f, waves[1].y
                 )
-                .amplitude(9000L, 0, LinearInterpolator(), 10f, 50f, 10f)
+                .amplitude(7000L, 0, LinearInterpolator(), waves[1].amplitude, 80f, 60f, waves[1].amplitude)
         )
+    }
+
+    class MessageHandler : Handler() {
+        val speed = MutableLiveData<Float>()
+
+        init {
+            speed.postValue(1f)
+        }
+
+        override fun handleMessage(msg: Message?) {
+            when (msg?.what) {
+                MSG_SPEED_UP -> speed.postValue(6f)
+                MSG_SLOW_DOWN -> speed.postValue(1f/6f)
+                MSG_RESET -> speed.postValue(1f)
+                else -> super.handleMessage(msg)
+            }
+        }
     }
 }
