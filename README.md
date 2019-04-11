@@ -1,8 +1,8 @@
 # WaveDrawable
-![](https://jitpack.io/v/mario222k/WaveDrawable.svg)](https://jitpack.io/#mario222k/WaveDrawable)
+![](https://jitpack.io/v/mario222k/WaveDrawable.svg)
 Contains Wave, WaveAnimator and WaveDrawable. A alternative solution to all the WaveViews.
 
-## setup
+## Setup
 Step 1. Add the JitPack repository to your build file
 Add it in your root build.gradle at the end of repositories:
 ```
@@ -17,7 +17,7 @@ Add it in your root build.gradle at the end of repositories:
 Step 2. Add the dependency
 ```
 	dependencies {
-	        implementation 'com.github.marik:WaveDrawable:Tag'
+	        implementation 'com.github.marik:WaveDrawable:<VERSION>'
 	}
 ```
 ![Screenshot](/screenshots/WaveDrawableRecord.gif)
